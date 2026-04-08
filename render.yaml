@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: meditriage-backend
+    runtime: docker
+    rootDir: backend
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./meditriage.db
+      - key: RATE_LIMIT_PER_MINUTE
+        value: 300
+      - key: ALLOWED_ORIGINS
+        value: https://meditriage-frontend.onrender.com
+
+  - type: web
+    name: meditriage-frontend
+    runtime: docker
+    rootDir: frontend
+    plan: free

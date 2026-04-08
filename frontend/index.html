@@ -1096,9 +1096,10 @@ body {
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────────────
-// If you deploy the FastAPI backend, replace this URL:
-const API = 'https://meditriage-api.railway.app';
-// For local dev: const API = 'http://localhost:8000';
+// Runtime API config supports local dev, deployment, and query override.
+const DEFAULT_API = 'http://localhost:8000';
+const API = new URLSearchParams(window.location.search).get('api') || window.__MEDITRIAGE_API__ || localStorage.getItem('MEDITRIAGE_API') || DEFAULT_API;
+const WS_URL = API.replace(/^http/i, 'ws') + '/ws/updates';
 
 // ── CLOCK ───────────────────────────────────────────────────────────────────
 function updateClock() {
@@ -1124,70 +1125,34 @@ function switchView(id, el) {
     alerts: 'System Alerts'
   };
   document.getElementById('page-title').textContent = titles[id] || id;
-  if (id === 'queue') loadQueue();
-  if (id === 'beds') loadBeds();
-  if (id === 'forecast') loadForecast();
-  if (id === 'alerts') loadAlerts();
+  if (id === 'queue') loadQueue().catch(() => setConnectionState(false));
+  if (id === 'beds') loadBeds().catch(() => setConnectionState(false));
+  if (id === 'forecast') loadForecast().catch(() => setConnectionState(false));
+  if (id === 'alerts') loadAlerts().catch(() => setConnectionState(false));
 }
 
-// ── MOCK DATA (fallback when API unavailable) ────────────────────────────────
-function mockStats() {
-  return {
-    total_beds: 125, occupied_beds: 98, available_beds: 27,
-    overall_utilization: 78.4, patients_triaged_today: 247,
-    avg_triage_time_seconds: 18, critical_cases_today: 14
-  };
+function setConnectionState(ok) {
+  const livePill = document.querySelector('.live-pill');
+  if (!livePill) return;
+  livePill.style.background = ok ? 'var(--green-dim)' : 'var(--red-dim)';
+  livePill.style.borderColor = ok ? 'var(--green-border)' : 'var(--red-border)';
+  livePill.style.color = ok ? 'var(--green)' : 'var(--red)';
+  livePill.innerHTML = `<div class="live-dot" style="background:${ok ? 'var(--green)' : 'var(--red)'}"></div>${ok ? 'Live' : 'Disconnected'}`;
 }
 
-function mockBeds() {
-  return [
-    {department:'Resuscitation Bay', total:4, occupied:3, available:1, utilization_pct:75},
-    {department:'Critical Care (ICU)', total:20, occupied:18, available:2, utilization_pct:90},
-    {department:'Acute Care', total:40, occupied:32, available:8, utilization_pct:80},
-    {department:'Fast Track', total:30, occupied:22, available:8, utilization_pct:73},
-    {department:'Minor Care', total:25, occupied:15, available:10, utilization_pct:60},
-    {department:'Trauma Bay', total:6, occupied:8, available:0, utilization_pct:88},
-  ];
-}
-
-function mockQueue() {
-  return [
-    {position:1, patient_id:'PT-4521', complaint:'Chest pain, shortness of breath', esi_level:2, esi_label:'Emergent', wait:'≤15 min', department:'Critical Care', arrived:'09:14'},
-    {position:2, patient_id:'PT-7832', complaint:'Cardiac arrest (incoming)', esi_level:1, esi_label:'Resuscitation', wait:'Immediate', department:'Resuscitation Bay', arrived:'09:22'},
-    {position:3, patient_id:'PT-3310', complaint:'Head trauma, fall from height', esi_level:2, esi_label:'Emergent', wait:'≤15 min', department:'Trauma Bay', arrived:'09:18'},
-    {position:4, patient_id:'PT-6641', complaint:'High fever 104°F, rigor', esi_level:3, esi_label:'Urgent', wait:'≤30 min', department:'Acute Care', arrived:'08:55'},
-    {position:5, patient_id:'PT-2209', complaint:'Abdominal pain, vomiting', esi_level:3, esi_label:'Urgent', wait:'≤30 min', department:'Acute Care', arrived:'09:05'},
-    {position:6, patient_id:'PT-9981', complaint:'Allergic reaction, mild rash', esi_level:4, esi_label:'Less Urgent', wait:'≤60 min', department:'Fast Track', arrived:'09:01'},
-    {position:7, patient_id:'PT-1147', complaint:'Minor laceration, right hand', esi_level:5, esi_label:'Non-Urgent', wait:'≤120 min', department:'Minor Care', arrived:'08:48'},
-  ];
-}
-
-function mockForecast() {
-  return [
-    {hour:1, label:'+1h', predicted_admissions:5, predicted_utilization:81.2, risk_level:'moderate'},
-    {hour:2, label:'+2h', predicted_admissions:7, predicted_utilization:85.6, risk_level:'high'},
-    {hour:3, label:'+3h', predicted_admissions:9, predicted_utilization:91.3, risk_level:'critical'},
-    {hour:4, label:'+4h', predicted_admissions:8, predicted_utilization:89.1, risk_level:'high'},
-    {hour:5, label:'+5h', predicted_admissions:6, predicted_utilization:84.0, risk_level:'high'},
-    {hour:6, label:'+6h', predicted_admissions:4, predicted_utilization:76.5, risk_level:'moderate'},
-  ];
-}
-
-// ── API FETCH WITH FALLBACK ──────────────────────────────────────────────────
-async function apiFetch(endpoint, fallback) {
-  try {
-    const res = await fetch(API + endpoint, { signal: AbortSignal.timeout(4000) });
-    if (!res.ok) throw new Error('API error');
-    return await res.json();
-  } catch {
-    return fallback;
+// ── API FETCH (LIVE ONLY) ───────────────────────────────────────────────────
+async function apiFetch(endpoint, timeoutMs = 5000) {
+  const res = await fetch(API + endpoint, { signal: AbortSignal.timeout(timeoutMs) });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(body || `HTTP ${res.status}`);
   }
+  return await res.json();
 }
 
 // ── LOAD STATS ───────────────────────────────────────────────────────────────
 async function loadStats() {
-  const data = await apiFetch('/api/stats', mockStats());
-  const s = data.total_beds ? data : mockStats();
+  const s = await apiFetch('/api/stats');
   document.getElementById('stat-available').textContent = s.available_beds;
   document.getElementById('stat-total').textContent = s.total_beds;
   document.getElementById('stat-util').textContent = s.overall_utilization + '%';
@@ -1203,8 +1168,8 @@ async function loadStats() {
 
 // ── LOAD BEDS ─────────────────────────────────────────────────────────────────
 async function loadBeds() {
-  const data = await apiFetch('/api/beds', { beds: mockBeds() });
-  const beds = data.beds || mockBeds();
+  const data = await apiFetch('/api/beds');
+  const beds = data.beds || [];
   renderDashBeds(beds);
   renderFullBeds(beds);
 }
@@ -1217,6 +1182,10 @@ function utilClass(pct) {
 
 function renderDashBeds(beds) {
   const el = document.getElementById('dash-beds');
+  if (!beds.length) {
+    el.innerHTML = '<div class="loading">No live bed feeds yet. Provision departments via API.</div>';
+    return;
+  }
   el.innerHTML = beds.slice(0, 4).map(b => `
     <div class="bed-item">
       <div class="bed-dept">${b.department}</div>
@@ -1232,6 +1201,14 @@ function renderDashBeds(beds) {
 function renderFullBeds(beds) {
   const grid = document.getElementById('full-beds-grid');
   if (!grid) return;
+  if (!beds.length) {
+    grid.innerHTML = '<div class="loading">No department capacity configured.</div>';
+    const sg = document.getElementById('beds-stats-grid');
+    if (sg) {
+      sg.innerHTML = '<div class="loading">Waiting for live bed provisioning...</div>';
+    }
+    return;
+  }
   grid.innerHTML = beds.map(b => `
     <div class="bed-item" style="padding:16px">
       <div class="bed-dept" style="font-size:12px;margin-bottom:6px">${b.department}</div>
@@ -1261,8 +1238,8 @@ function renderFullBeds(beds) {
 
 // ── LOAD QUEUE ────────────────────────────────────────────────────────────────
 async function loadQueue() {
-  const data = await apiFetch('/api/queue', { queue: mockQueue() });
-  const queue = data.queue || mockQueue();
+  const data = await apiFetch('/api/queue');
+  const queue = data.queue || [];
   document.getElementById('queue-badge').textContent = queue.length;
   const tableHTML = `
     <table class="queue-table">
@@ -1303,8 +1280,8 @@ async function loadQueue() {
 
 // ── LOAD FORECAST ────────────────────────────────────────────────────────────
 async function loadForecast() {
-  const data = await apiFetch('/api/forecast', { forecast: mockForecast() });
-  const fc = data.forecast || mockForecast();
+  const data = await apiFetch('/api/forecast');
+  const fc = data.forecast || [];
   renderForecastBars(fc, 'dash-forecast');
   renderForecastBars(fc, 'full-forecast-wrap');
   renderForecastTable(fc);
@@ -1313,7 +1290,10 @@ async function loadForecast() {
 function renderForecastBars(fc, targetId) {
   const el = document.getElementById(targetId);
   if (!el) return;
-  const maxAdm = Math.max(...fc.map(f => f.predicted_admissions));
+  if (!fc.length) {
+    el.innerHTML = '<div class="loading">Insufficient live triage history for forecast.</div>';
+    return;
+  }
   el.innerHTML = `<div class="forecast-bars" style="height:120px">` +
     fc.map(f => {
       const h = Math.round((f.predicted_utilization / 100) * 100);
@@ -1360,16 +1340,10 @@ function renderForecastTable(fc) {
 }
 
 // ── ALERTS ───────────────────────────────────────────────────────────────────
-function loadAlerts() {
-  const alerts = [
-    { type: 'critical', text: 'ICU utilization at 90% — 2 beds remaining. Consider activating overflow protocol.', time: '09:22' },
-    { type: 'critical', text: 'Resuscitation Bay: 3 of 4 bays occupied. Incoming cardiac arrest case en route.', time: '09:18' },
-    { type: 'warning', text: 'Forecast shows >91% utilization in +3h window. Pre-emptive staff alert recommended.', time: '09:15' },
-    { type: 'warning', text: 'Acute Care: 5 ESI-3 patients waiting >25 minutes. Consider rerouting to Fast Track.', time: '09:10' },
-    { type: 'info', text: 'Average triage scoring time: 18 seconds. AI model performing within normal parameters.', time: '09:00' },
-    { type: 'info', text: 'System refresh cycle: all bed data updated as of 09:22. Next update in 30 seconds.', time: '08:58' },
-  ];
-
+async function loadAlerts() {
+  const data = await apiFetch('/api/alerts');
+  const alerts = data.alerts || [];
+  document.getElementById('alert-badge').textContent = alerts.filter(a => a.type === 'critical').length;
   document.getElementById('alerts-feed').innerHTML = alerts.map(a => `
     <div class="alert-item ${a.type}">
       <div class="alert-dot"></div>
@@ -1438,38 +1412,23 @@ async function submitTriage() {
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(5000)
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Unable to process triage request' }));
+      const detail = Array.isArray(err.detail)
+        ? err.detail.map(d => `${d.loc?.join('.') || 'field'}: ${d.msg}`).join(' | ')
+        : (err.detail || 'Unable to process triage request');
+      showModal('Triage validation error', detail);
+      resultEl.style.display = 'none';
+      return;
+    }
     result = await res.json();
   } catch {
-    // Fallback: compute locally
-    result = computeLocalTriage(payload);
+    showModal('Backend unavailable', 'Live triage API is unavailable right now. No local fallback is used in production mode.');
+    resultEl.style.display = 'none';
+    return;
   }
 
   renderTriageResult(result);
-}
-
-function computeLocalTriage(p) {
-  let score = 0;
-  const vitAlerts = [], risks = [];
-  if (p.heart_rate < 50 || p.heart_rate > 150) { score += 30; vitAlerts.push(`Critical HR: ${p.heart_rate} bpm`); }
-  else if (p.heart_rate < 60 || p.heart_rate > 120) { score += 15; }
-  if (p.systolic_bp < 90 || p.systolic_bp > 180) { score += 30; vitAlerts.push(`Critical BP: ${p.systolic_bp}/${p.diastolic_bp} mmHg`); }
-  if (p.spo2 < 90) { score += 35; vitAlerts.push(`Critical SpO2: ${p.spo2}%`); }
-  else if (p.spo2 < 95) { score += 20; vitAlerts.push(`Low SpO2: ${p.spo2}%`); }
-  if (p.respiratory_rate < 8 || p.respiratory_rate > 30) { score += 30; vitAlerts.push(`Critical RR: ${p.respiratory_rate}/min`); }
-  const consScore = {alert:0,verbal:20,pain:40,unresponsive:60}[p.consciousness]||0;
-  score += consScore;
-  if (consScore >= 40) vitAlerts.push(`Altered consciousness: ${p.consciousness}`);
-  const highRisk = ['chest pain','shortness of breath','cardiac','bleeding','seizure','stroke','overdose','anaphylaxis'];
-  const allText = (p.chief_complaint + ' ' + p.symptoms.join(' ')).toLowerCase();
-  for (const k of highRisk) { if (allText.includes(k)) { score += 25; risks.push(`High-risk: ${k}`); } }
-  if (p.pain_scale >= 9) score += 20;
-  if (p.arrival_mode === 'ambulance') { score += 15; risks.push('Arrived by ambulance'); }
-  if (p.age < 2 || p.age > 75) { score += 10; risks.push(`Age risk: ${p.age} years`); }
-  const esi = score >= 100 ? 1 : score >= 70 ? 2 : score >= 40 ? 3 : score >= 20 ? 4 : 5;
-  const labels = {1:'Resuscitation — Immediate',2:'Emergent — 1–15 minutes',3:'Urgent — 30 minutes',4:'Less Urgent — 60 minutes',5:'Non-Urgent — 120+ minutes'};
-  const waits = {1:'Immediate',2:'≤15 minutes',3:'≤30 minutes',4:'≤60 minutes',5:'≤120 minutes'};
-  const depts = {1:'Resuscitation Bay',2:'Critical Care',3:'Acute Care',4:'Fast Track',5:'Minor Care'};
-  return { patient_id:`PT-${Math.floor(Math.random()*90000+10000)}`, esi_level:esi, esi_label:labels[esi], priority_score:Math.min(score,100), recommended_wait:waits[esi], recommended_department:depts[esi], risk_flags:risks.slice(0,5), vital_alerts:vitAlerts.slice(0,5), timestamp:new Date().toISOString() };
 }
 
 function renderTriageResult(r) {
@@ -1533,11 +1492,49 @@ function closeModal() { document.getElementById('modal').classList.remove('open'
 
 // ── REFRESH ALL ───────────────────────────────────────────────────────────────
 async function refreshAll() {
-  await Promise.all([loadStats(), loadBeds(), loadQueue(), loadForecast()]);
+  const tasks = [loadStats(), loadBeds(), loadQueue(), loadForecast(), loadAlerts()];
+  const settled = await Promise.allSettled(tasks);
+  const hasFailure = settled.some(s => s.status === 'rejected');
+  setConnectionState(!hasFailure);
+}
+
+function connectRealtime() {
+  try {
+    const ws = new WebSocket(WS_URL);
+    ws.onopen = () => {
+      setConnectionState(true);
+      ws.send('subscribe');
+    };
+    ws.onmessage = (evt) => {
+      const payload = JSON.parse(evt.data);
+      if (payload.event === 'metrics_tick' && payload.stats) {
+        const s = payload.stats;
+        document.getElementById('stat-available').textContent = s.available_beds;
+        document.getElementById('stat-total').textContent = s.total_beds;
+        document.getElementById('stat-util').textContent = s.overall_utilization + '%';
+        document.getElementById('stat-triaged').textContent = s.patients_triaged_today;
+        document.getElementById('stat-triage-time').textContent = s.avg_triage_time_seconds;
+        document.getElementById('stat-critical').textContent = s.critical_cases_today;
+      }
+      if (payload.event === 'triage_created' || payload.event === 'bed_updated') {
+        refreshAll();
+      }
+    };
+    ws.onclose = () => {
+      setConnectionState(false);
+      setTimeout(connectRealtime, 2000);
+    };
+    ws.onerror = () => {
+      setConnectionState(false);
+    };
+  } catch {
+    setConnectionState(false);
+  }
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 refreshAll();
+connectRealtime();
 // Auto-refresh every 30 seconds
 setInterval(refreshAll, 30000);
 </script>

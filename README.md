@@ -23,6 +23,14 @@ India has 1 doctor per 1,500 patients — well below WHO recommendations. Govern
 
 MediTriage AI is a three-component clinical decision support system:
 
+### Production-Ready Core (v2)
+- Persistent event storage with SQLite/PostgreSQL-compatible SQLAlchemy models
+- Real-time operations stream via WebSocket (`/ws/updates`)
+- Rate-limited triage ingestion (`RATE_LIMIT_PER_MINUTE`)
+- API-key protection for bed-capacity mutation endpoints (`MEDITRIAGE_API_KEY`)
+- Readiness probe (`/api/ready`) and health probe (`/api/health`)
+- Live-data-only frontend mode (no mock/predefined fallback data)
+
 ### 1. AI Triage Scoring Engine
 - Scores patient urgency using the **Emergency Severity Index (ESI)** and **Manchester Triage System (MTS)**
 - Inputs: vitals, symptoms, chief complaint, medical history, consciousness level
@@ -47,7 +55,7 @@ MediTriage AI is a three-component clinical decision support system:
 
 **Live landing page:** https://karthik321-coder.github.io/meditriage-ai
 
-**Dashboard:** Open `frontend/index.html` in any browser (works offline with mock data)
+**Dashboard:** Open `frontend/index.html` in any browser and connect to a live API
 
 **API docs:** Run backend → visit `http://localhost:8000/docs`
 
@@ -58,6 +66,7 @@ MediTriage AI is a three-component clinical decision support system:
 | Layer | Technology |
 |---|---|
 | Backend API | Python, FastAPI, Uvicorn |
+| Data Layer | SQLAlchemy (SQLite by default, PostgreSQL compatible) |
 | ML Triage Model | scikit-learn, XGBoost, pandas, NumPy |
 | NLP Symptom Intake | Anthropic Claude API |
 | Frontend Dashboard | HTML, CSS, JavaScript (vanilla) |
@@ -94,6 +103,10 @@ meditriage-ai/
 ```bash
 cd backend
 pip install -r requirements.txt
+set DATABASE_URL=sqlite:///./meditriage.db
+set RATE_LIMIT_PER_MINUTE=60
+# optional for secured bed updates
+set MEDITRIAGE_API_KEY=your-secret-key
 python main.py
 # API live at http://localhost:8000
 # Swagger docs at http://localhost:8000/docs
@@ -102,15 +115,27 @@ python main.py
 ### Frontend (Dashboard)
 
 ```bash
-# Option 1: Open directly in browser
-open frontend/index.html
+# Option 1: Open directly in browser and set backend in query
+open frontend/index.html?api=http://localhost:8000
 
 # Option 2: Serve locally
 python -m http.server 3000 --directory frontend
 # Visit http://localhost:3000
 ```
 
-The dashboard works **fully offline** with realistic mock data. When the backend is running locally, it automatically connects to live data.
+The dashboard runs in **live-data-only mode**. If backend endpoints are unavailable, UI shows disconnected state instead of fallback demo data.
+
+---
+
+## Deployment
+
+This repo is ready for permanent hosting.
+
+- Railway + Vercel
+- Render Blueprint (`render.yaml`)
+- Docker Compose (`docker-compose.prod.yml`)
+
+Full production guide: see `DEPLOYMENT.md`
 
 ---
 
@@ -124,6 +149,24 @@ The dashboard works **fully offline** with realistic mock data. When the backend
 | `GET` | `/api/forecast` | 6-hour resource utilization forecast |
 | `GET` | `/api/stats` | Hospital-wide summary statistics |
 | `GET` | `/api/health` | Health check |
+| `GET` | `/api/ready` | Readiness check (DB connectivity) |
+| `PUT` | `/api/beds/{department}` | Update live occupied beds (API key protected) |
+| `POST` | `/api/beds/provision` | Upsert departments and capacity from live hospital feeds |
+| `WS` | `/ws/updates` | Real-time triage/metrics/beds events |
+| `GET` | `/api/alerts` | Live operational alerts derived from current utilization + forecast |
+| `GET` | `/api/ops/traffic` | Real-time traffic metrics (1m/5m/hourly throughput) |
+
+### Live Provisioning Example
+
+```bash
+curl -X POST http://localhost:8000/api/beds/provision \
+  -H "Content-Type: application/json" \
+  -d '[
+    {"department":"Resuscitation Bay","total":6,"occupied":2},
+    {"department":"Critical Care","total":24,"occupied":8},
+    {"department":"Acute Care","total":40,"occupied":15}
+  ]'
+```
 
 ### Triage Request Example
 

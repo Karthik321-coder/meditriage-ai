@@ -1,0 +1,20 @@
+version: '3.9'
+services:
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: sqlite:///./meditriage.db
+      RATE_LIMIT_PER_MINUTE: 300
+      ALLOWED_ORIGINS: http://localhost:8080
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "8080:80"
+    restart: unless-stopped

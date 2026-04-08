@@ -25,3 +25,8 @@ Thumbs.db
 build/
 dist/
 *.egg-info/
+
+# Runtime local data and secrets
+*.db
+.env
+.env.*
