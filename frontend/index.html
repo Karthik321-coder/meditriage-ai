@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediTriage AI — Emergency Intelligence Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0f1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --surface3: #1f2d44;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.12);
+  --text: #f0f4ff;
+  --muted: #8a9bbf;
+  --dim: #4a5568;
+  --green: #10d48a;
+  --green-dim: rgba(16,212,138,0.12);
+  --green-border: rgba(16,212,138,0.3);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.12);
+  --red: #f43f5e;
+  --red-dim: rgba(244,63,94,0.12);
+  --red-border: rgba(244,63,94,0.3);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96,165,250,0.12);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.12);
+  --esi1: #f43f5e;
+  --esi2: #f97316;
+  --esi3: #f59e0b;
+  --esi4: #10d48a;
+  --esi5: #60a5fa;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+
+/* LAYOUT */
+.app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background: var(--green);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-icon svg { width: 18px; height: 18px; }
+
+.logo-name {
+  font-family: 'Fraunces', serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.logo-sub {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-left: 42px;
+}
+
+.nav { padding: 12px 10px; flex: 1; }
+
+.nav-section {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 8px 10px 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  transition: all 0.15s;
+  margin-bottom: 2px;
+}
+
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--green-dim); color: var(--green); border: 1px solid var(--green-border); }
+
+.nav-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--red);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.nav-badge.green { background: var(--green); color: var(--bg); }
+
+.sidebar-footer {
+  padding: 12px 10px;
+  border-top: 1px solid var(--border);
+}
+
+.hospital-status {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.hs-label { font-size: 10px; color: var(--muted); margin-bottom: 6px; }
+.hs-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+
+.hs-bar-wrap { margin-bottom: 4px; }
+.hs-bar-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+.hs-bar { height: 4px; background: var(--surface3); border-radius: 2px; overflow: hidden; }
+.hs-bar-fill { height: 4px; border-radius: 2px; transition: width 0.8s ease; background: var(--green); }
+.hs-bar-fill.warn { background: var(--amber); }
+.hs-bar-fill.crit { background: var(--red); }
+
+/* MAIN */
+.main { overflow-y: auto; }
+
+/* TOPBAR */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(10,15,26,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.page-title { font-size: 15px; font-weight: 500; color: var(--text); }
+.breadcrumb { font-size: 12px; color: var(--muted); }
+
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.live-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--green-dim);
+  border: 1px solid var(--green-border);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--green);
+  font-weight: 500;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.timestamp { font-size: 11px; color: var(--dim); font-family: 'DM Mono', monospace; }
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--green);
+  color: var(--bg);
+}
+.btn-primary:hover { background: #0bbf7d; }
+
+.btn-ghost {
+  background: var(--surface2);
+  color: var(--muted);
+  border: 1px solid var(--border2);
+}
+.btn-ghost:hover { color: var(--text); background: var(--surface3); }
+
+/* CONTENT */
+.content { padding: 24px 28px; }
+
+/* VIEWS */
+.view { display: none; }
+.view.active { display: block; }
+
+/* STAT CARDS */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.stat-card:hover { border-color: var(--border2); }
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.stat-card.green::before { background: var(--green); }
+.stat-card.amber::before { background: var(--amber); }
+.stat-card.red::before { background: var(--red); }
+.stat-card.blue::before { background: var(--blue); }
+
+.stat-label { font-size: 11px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 6px;
+  font-family: 'DM Mono', monospace;
+}
+
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+.stat-value.amber { color: var(--amber); }
+
+.stat-sub { font-size: 11px; color: var(--dim); }
+.stat-trend { font-size: 11px; }
+.stat-trend.up { color: var(--green); }
+.stat-trend.down { color: var(--red); }
+
+/* TWO COL */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+/* PANELS */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-title svg { width: 14px; height: 14px; color: var(--muted); }
+
+.panel-action { font-size: 11px; color: var(--muted); cursor: pointer; }
+.panel-action:hover { color: var(--green); }
+
+.panel-body { padding: 16px 18px; }
+
+/* BED GRID */
+.bed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.bed-item {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+}
+
+.bed-dept { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.bed-count { font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; margin-bottom: 6px; }
+.bed-count span { font-size: 12px; font-weight: 400; color: var(--muted); }
+
+.util-bar { height: 4px; background: var(--surface3); border-radius: 2px; overflow: hidden; }
+.util-fill { height: 4px; border-radius: 2px; transition: width 0.8s ease; }
+.util-fill.low { background: var(--green); }
+.util-fill.med { background: var(--amber); }
+.util-fill.high { background: var(--red); }
+
+.util-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--dim); margin-top: 4px; }
+
+/* QUEUE TABLE */
+.queue-table { width: 100%; border-collapse: collapse; }
+.queue-table th {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.queue-table td {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.queue-table tr:last-child td { border-bottom: none; }
+.queue-table tr:hover td { background: var(--surface2); }
+
+.esi-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+}
+
+.esi-1 { background: rgba(244,63,94,0.2); color: var(--esi1); border: 1px solid rgba(244,63,94,0.4); }
+.esi-2 { background: rgba(249,115,22,0.2); color: var(--esi2); border: 1px solid rgba(249,115,22,0.4); }
+.esi-3 { background: rgba(245,158,11,0.2); color: var(--esi3); border: 1px solid rgba(245,158,11,0.4); }
+.esi-4 { background: rgba(16,212,138,0.2); color: var(--esi4); border: 1px solid rgba(16,212,138,0.4); }
+.esi-5 { background: rgba(96,165,250,0.2); color: var(--esi5); border: 1px solid rgba(96,165,250,0.4); }
+
+.dept-tag {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--surface3);
+  color: var(--muted);
+}
+
+/* FORECAST BARS */
+.forecast-bars { display: flex; gap: 8px; align-items: flex-end; height: 100px; padding: 0 4px; }
+.fc-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.fc-bar-outer { width: 100%; background: var(--surface2); border-radius: 4px; overflow: hidden; position: relative; height: 80px; display: flex; align-items: flex-end; }
+.fc-bar-fill { width: 100%; transition: height 0.8s ease; border-radius: 4px 4px 0 0; }
+.fc-bar-fill.low { background: var(--green); }
+.fc-bar-fill.moderate { background: var(--amber); }
+.fc-bar-fill.high { background: var(--red); opacity: 0.8; }
+.fc-bar-fill.critical { background: var(--red); animation: critFlash 1s infinite; }
+.fc-label { font-size: 10px; color: var(--dim); font-family: 'DM Mono', monospace; }
+.fc-val { font-size: 10px; color: var(--muted); }
+
+@keyframes critFlash { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* TRIAGE FORM */
+.triage-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+.form-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.form-section-header {
+  padding: 12px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+
+.form-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.form-input, .form-select {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px var(--green-dim);
+}
+
+.form-select option { background: var(--surface2); }
+
+.vital-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+.vital-input-wrap { position: relative; }
+.vital-unit {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--dim);
+  pointer-events: none;
+}
+
+/* RESULT CARD */
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 20px;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.result-header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.result-esi-display {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.esi-big {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+}
+
+.result-info h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.result-info p { font-size: 12px; color: var(--muted); }
+
+.result-body { padding: 16px 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; border-top: 1px solid var(--border); }
+
+.result-item-label { font-size: 10px; color: var(--dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+.result-item-value { font-size: 13px; font-weight: 500; color: var(--text); }
+
+.alerts-section { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 12px; flex-wrap: wrap; }
+
+.alert-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.alert-chip.danger { background: var(--red-dim); color: var(--red); border: 1px solid var(--red-border); }
+.alert-chip.warn { background: var(--amber-dim); color: var(--amber); }
+.alert-chip.info { background: var(--blue-dim); color: var(--blue); }
+
+/* ALERTS FEED */
+.alert-feed { display: flex; flex-direction: column; gap: 8px; }
+
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.alert-item.critical { background: var(--red-dim); border: 1px solid var(--red-border); }
+.alert-item.warning { background: var(--amber-dim); border: 1px solid rgba(245,158,11,0.3); }
+.alert-item.info { background: var(--blue-dim); border: 1px solid rgba(96,165,250,0.2); }
+
+.alert-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.critical .alert-dot { background: var(--red); }
+.warning .alert-dot { background: var(--amber); }
+.info .alert-dot { background: var(--blue); }
+
+.alert-text { color: var(--text); line-height: 1.4; }
+.alert-time { font-size: 10px; color: var(--dim); font-family: 'DM Mono', monospace; margin-top: 2px; }
+
+/* LOADING */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--dim);
+  font-size: 12px;
+  gap: 10px;
+}
+
+.spin {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* MODAL */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 24px;
+  width: 480px;
+  max-width: 90vw;
+  animation: slideUp 0.2s ease;
+}
+
+.modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.modal p { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* RESPONSIVE */
+@media (max-width: 1100px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  .triage-form { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .content { padding: 16px; }
+}
+
+/* TOOLTIP */
+.tooltip-wrap { position: relative; }
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface3);
+  color: var(--text);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  margin-bottom: 4px;
+}
+.tooltip-wrap:hover .tooltip { opacity: 1; }
+
+/* CHART MINI */
+.mini-chart { height: 40px; display: flex; align-items: flex-end; gap: 2px; }
+.mc-bar { flex: 1; border-radius: 2px 2px 0 0; transition: height 0.5s ease; }
+
+/* ESI LEGEND */
+.esi-legend { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 18px; border-top: 1px solid var(--border); }
+.esi-leg-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+.esi-leg-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+/* SWITCH */
+.switch-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+.switch-row:last-child { border-bottom: none; }
+
+.toggle {
+  width: 32px;
+  height: 18px;
+  background: var(--surface3);
+  border-radius: 9px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.toggle.on { background: var(--green); }
+
+.toggle-thumb {
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: transform 0.2s;
+}
+
+.toggle.on .toggle-thumb { transform: translateX(14px); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0a0f1a" stroke-width="2.5" stroke-linecap="round">
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/>
+          <circle cx="12" cy="12" r="4" fill="#0a0f1a"/>
+        </svg>
+      </div>
+      <span class="logo-name">MediTriage</span>
+    </div>
+    <div class="logo-sub">AI Emergency Platform</div>
+  </div>
+
+  <nav class="nav">
+    <div class="nav-section">Overview</div>
+    <div class="nav-item active" onclick="switchView('dashboard', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="switchView('queue', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Patient Queue
+      <span class="nav-badge" id="queue-badge">—</span>
+    </div>
+    <div class="nav-item" onclick="switchView('beds', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      Bed Management
+    </div>
+    <div class="nav-section">Tools</div>
+    <div class="nav-item" onclick="switchView('triage', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Triage Patient
+    </div>
+    <div class="nav-item" onclick="switchView('forecast', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Resource Forecast
+    </div>
+    <div class="nav-item" onclick="switchView('alerts', this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+      Alerts
+      <span class="nav-badge" id="alert-badge">3</span>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="hospital-status">
+      <div class="hs-label">Hospital Utilization</div>
+      <div class="hs-name">MSRIT Medical Centre</div>
+      <div class="hs-bar-wrap">
+        <div class="hs-bar-label"><span>Overall</span><span id="sidebar-util">—%</span></div>
+        <div class="hs-bar"><div class="hs-bar-fill" id="sidebar-util-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="page-title" id="page-title">Emergency Dashboard</div>
+        <div class="breadcrumb">MediTriage AI — Real-time Overview</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-pill"><div class="live-dot"></div>Live</div>
+      <div class="timestamp" id="clock">—</div>
+      <button class="btn btn-ghost" onclick="refreshAll()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD VIEW -->
+    <div class="view active" id="view-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-label">Available Beds</div>
+          <div class="stat-value green" id="stat-available">—</div>
+          <div class="stat-sub">of <span id="stat-total">—</span> total beds</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-label">Occupancy Rate</div>
+          <div class="stat-value amber" id="stat-util">—%</div>
+          <div class="stat-sub">hospital-wide</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Triaged Today</div>
+          <div class="stat-value" id="stat-triaged">—</div>
+          <div class="stat-sub">avg <span id="stat-triage-time">—</span>s per patient</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Critical Cases</div>
+          <div class="stat-value red" id="stat-critical">—</div>
+          <div class="stat-sub">ESI 1 & 2 today</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+              Bed Availability
+            </div>
+            <span class="panel-action" onclick="switchView('beds', document.querySelector('[onclick*=beds]'))">View all →</span>
+          </div>
+          <div class="panel-body">
+            <div class="bed-grid" id="dash-beds">
+              <div class="loading"><div class="spin"></div> Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              Active Queue
+            </div>
+            <span class="panel-action" onclick="switchView('queue', document.querySelector('[onclick*=queue]'))">View all →</span>
+          </div>
+          <div class="panel-body" style="padding:0">
+            <div id="dash-queue-wrap">
+              <div class="loading"><div class="spin"></div></div>
+            </div>
+          </div>
+          <div class="esi-legend">
+            <div class="esi-leg-item"><div class="esi-leg-dot" style="background:var(--esi1)"></div>ESI 1 Resuscitation</div>
+            <div class="esi-leg-item"><div class="esi-leg-dot" style="background:var(--esi2)"></div>ESI 2 Emergent</div>
+            <div class="esi-leg-item"><div class="esi-leg-dot" style="background:var(--esi3)"></div>ESI 3 Urgent</div>
+            <div class="esi-leg-item"><div class="esi-leg-dot" style="background:var(--esi4)"></div>ESI 4 Less Urgent</div>
+            <div class="esi-leg-item"><div class="esi-leg-dot" style="background:var(--esi5)"></div>ESI 5 Non-Urgent</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            6-Hour Resource Forecast
+          </div>
+          <span class="panel-action" onclick="switchView('forecast', document.querySelector('[onclick*=forecast]'))">Full forecast →</span>
+        </div>
+        <div class="panel-body">
+          <div class="forecast-bars" id="dash-forecast">
+            <div class="loading"><div class="spin"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUEUE VIEW -->
+    <div class="view" id="view-queue">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Live Patient Queue</div>
+          <button class="btn btn-primary" style="font-size:11px;padding:5px 12px" onclick="switchView('triage', document.querySelector('[onclick*=triage]'))">+ Triage New Patient</button>
+        </div>
+        <div style="overflow-x:auto" id="full-queue-wrap">
+          <div class="loading"><div class="spin"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BEDS VIEW -->
+    <div class="view" id="view-beds">
+      <div class="stats-grid" id="beds-stats-grid">
+        <div class="loading"><div class="spin"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Department Capacity Overview</div>
+          <span class="panel-action" onclick="loadBeds()">↻ Refresh</span>
+        </div>
+        <div class="panel-body">
+          <div id="full-beds-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+            <div class="loading"><div class="spin"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRIAGE VIEW -->
+    <div class="view" id="view-triage">
+      <div class="triage-form">
+        <div>
+          <div class="form-section">
+            <div class="form-section-header">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Patient Information
+            </div>
+            <div class="form-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Age *</label>
+                  <input class="form-input" type="number" id="f-age" placeholder="35" min="0" max="120">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Gender *</label>
+                  <select class="form-select" id="f-gender">
+                    <option value="">Select</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Chief Complaint *</label>
+                <input class="form-input" type="text" id="f-complaint" placeholder="e.g. Chest pain and shortness of breath">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Symptoms (comma-separated)</label>
+                <input class="form-input" type="text" id="f-symptoms" placeholder="e.g. nausea, dizziness, sweating">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Medical History (comma-separated)</label>
+                <input class="form-input" type="text" id="f-history" placeholder="e.g. diabetes, hypertension">
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Consciousness *</label>
+                  <select class="form-select" id="f-consciousness">
+                    <option value="alert">Alert</option>
+                    <option value="verbal">Verbal</option>
+                    <option value="pain">Pain</option>
+                    <option value="unresponsive">Unresponsive</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Arrival Mode *</label>
+                  <select class="form-select" id="f-arrival">
+                    <option value="walk-in">Walk-in</option>
+                    <option value="ambulance">Ambulance</option>
+                    <option value="referred">Referred</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Pain Scale (0–10) *</label>
+                <input class="form-input" type="range" id="f-pain" min="0" max="10" value="5" oninput="document.getElementById('pain-val').textContent=this.value" style="padding:4px 0;background:transparent;border:none;cursor:pointer">
+                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim)">
+                  <span>0 No pain</span><span id="pain-val" style="color:var(--green);font-weight:600">5</span><span>10 Worst</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="form-section">
+            <div class="form-section-header">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              Vital Signs
+            </div>
+            <div class="form-body">
+              <div class="vital-grid">
+                <div class="form-group">
+                  <label class="form-label">Heart Rate *</label>
+                  <div class="vital-input-wrap">
+                    <input class="form-input" type="number" id="f-hr" placeholder="80" min="20" max="300" style="padding-right:34px">
+                    <span class="vital-unit">bpm</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Systolic BP *</label>
+                  <div class="vital-input-wrap">
+                    <input class="form-input" type="number" id="f-sbp" placeholder="120" min="50" max="300" style="padding-right:42px">
+                    <span class="vital-unit">mmHg</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Diastolic BP *</label>
+                  <div class="vital-input-wrap">
+                    <input class="form-input" type="number" id="f-dbp" placeholder="80" min="30" max="200" style="padding-right:42px">
+                    <span class="vital-unit">mmHg</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Resp. Rate *</label>
+                  <div class="vital-input-wrap">
+                    <input class="form-input" type="number" id="f-rr" placeholder="16" min="4" max="60" style="padding-right:30px">
+                    <span class="vital-unit">/min</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Temperature *</label>
+                  <div class="vital-input-wrap">
+                    <input class="form-input" type="number" id="f-temp" placeholder="37.0" min="30" max="45" step="0.1" style="padding-right:18px">
+                    <span class="vital-unit">°C</span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">SpO2 *</label>
+                  <div class="vital-input-wrap">
+                    <input class="form-input" type="number" id="f-spo2" placeholder="98" min="50" max="100" style="padding-right:14px">
+                    <span class="vital-unit">%</span>
+                  </div>
+                </div>
+              </div>
+              <div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:11px;color:var(--dim);line-height:1.6">
+                <strong style="color:var(--muted)">Reference ranges:</strong> HR 60–100 bpm · BP 90–140/60–90 mmHg · RR 12–20/min · Temp 36.1–37.2°C · SpO2 ≥95%
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;display:flex;gap:10px">
+            <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="fillDemo()">Load Demo Patient</button>
+            <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="submitTriage()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              Run AI Triage
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="triage-result" style="display:none"></div>
+    </div>
+
+    <!-- FORECAST VIEW -->
+    <div class="view" id="view-forecast">
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-header">
+          <div class="panel-title">6-Hour Predictive Resource Forecast</div>
+          <span class="panel-action" onclick="loadForecast()">↻ Refresh</span>
+        </div>
+        <div class="panel-body" id="full-forecast-wrap">
+          <div class="loading"><div class="spin"></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Forecast Details</div></div>
+        <div style="overflow-x:auto" id="forecast-table-wrap">
+          <div class="loading"><div class="spin"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERTS VIEW -->
+    <div class="view" id="view-alerts">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">System Alerts</div>
+          <span class="panel-action" onclick="document.getElementById('alert-badge').textContent='0'">Clear all</span>
+        </div>
+        <div class="panel-body">
+          <div class="alert-feed" id="alerts-feed">
+            <div class="loading"><div class="spin"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Alert</h3>
+    <p id="modal-body"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Dismiss</button>
+      <button class="btn btn-primary" onclick="closeModal()">Acknowledge</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+// If you deploy the FastAPI backend, replace this URL:
+const API = 'https://meditriage-api.railway.app';
+// For local dev: const API = 'http://localhost:8000';
+
+// ── CLOCK ───────────────────────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-IN', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── NAV ─────────────────────────────────────────────────────────────────────
+function switchView(id, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  const titles = {
+    dashboard: 'Emergency Dashboard',
+    queue: 'Patient Queue',
+    beds: 'Bed Management',
+    triage: 'Triage Patient',
+    forecast: 'Resource Forecast',
+    alerts: 'System Alerts'
+  };
+  document.getElementById('page-title').textContent = titles[id] || id;
+  if (id === 'queue') loadQueue();
+  if (id === 'beds') loadBeds();
+  if (id === 'forecast') loadForecast();
+  if (id === 'alerts') loadAlerts();
+}
+
+// ── MOCK DATA (fallback when API unavailable) ────────────────────────────────
+function mockStats() {
+  return {
+    total_beds: 125, occupied_beds: 98, available_beds: 27,
+    overall_utilization: 78.4, patients_triaged_today: 247,
+    avg_triage_time_seconds: 18, critical_cases_today: 14
+  };
+}
+
+function mockBeds() {
+  return [
+    {department:'Resuscitation Bay', total:4, occupied:3, available:1, utilization_pct:75},
+    {department:'Critical Care (ICU)', total:20, occupied:18, available:2, utilization_pct:90},
+    {department:'Acute Care', total:40, occupied:32, available:8, utilization_pct:80},
+    {department:'Fast Track', total:30, occupied:22, available:8, utilization_pct:73},
+    {department:'Minor Care', total:25, occupied:15, available:10, utilization_pct:60},
+    {department:'Trauma Bay', total:6, occupied:8, available:0, utilization_pct:88},
+  ];
+}
+
+function mockQueue() {
+  return [
+    {position:1, patient_id:'PT-4521', complaint:'Chest pain, shortness of breath', esi_level:2, esi_label:'Emergent', wait:'≤15 min', department:'Critical Care', arrived:'09:14'},
+    {position:2, patient_id:'PT-7832', complaint:'Cardiac arrest (incoming)', esi_level:1, esi_label:'Resuscitation', wait:'Immediate', department:'Resuscitation Bay', arrived:'09:22'},
+    {position:3, patient_id:'PT-3310', complaint:'Head trauma, fall from height', esi_level:2, esi_label:'Emergent', wait:'≤15 min', department:'Trauma Bay', arrived:'09:18'},
+    {position:4, patient_id:'PT-6641', complaint:'High fever 104°F, rigor', esi_level:3, esi_label:'Urgent', wait:'≤30 min', department:'Acute Care', arrived:'08:55'},
+    {position:5, patient_id:'PT-2209', complaint:'Abdominal pain, vomiting', esi_level:3, esi_label:'Urgent', wait:'≤30 min', department:'Acute Care', arrived:'09:05'},
+    {position:6, patient_id:'PT-9981', complaint:'Allergic reaction, mild rash', esi_level:4, esi_label:'Less Urgent', wait:'≤60 min', department:'Fast Track', arrived:'09:01'},
+    {position:7, patient_id:'PT-1147', complaint:'Minor laceration, right hand', esi_level:5, esi_label:'Non-Urgent', wait:'≤120 min', department:'Minor Care', arrived:'08:48'},
+  ];
+}
+
+function mockForecast() {
+  return [
+    {hour:1, label:'+1h', predicted_admissions:5, predicted_utilization:81.2, risk_level:'moderate'},
+    {hour:2, label:'+2h', predicted_admissions:7, predicted_utilization:85.6, risk_level:'high'},
+    {hour:3, label:'+3h', predicted_admissions:9, predicted_utilization:91.3, risk_level:'critical'},
+    {hour:4, label:'+4h', predicted_admissions:8, predicted_utilization:89.1, risk_level:'high'},
+    {hour:5, label:'+5h', predicted_admissions:6, predicted_utilization:84.0, risk_level:'high'},
+    {hour:6, label:'+6h', predicted_admissions:4, predicted_utilization:76.5, risk_level:'moderate'},
+  ];
+}
+
+// ── API FETCH WITH FALLBACK ──────────────────────────────────────────────────
+async function apiFetch(endpoint, fallback) {
+  try {
+    const res = await fetch(API + endpoint, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) throw new Error('API error');
+    return await res.json();
+  } catch {
+    return fallback;
+  }
+}
+
+// ── LOAD STATS ───────────────────────────────────────────────────────────────
+async function loadStats() {
+  const data = await apiFetch('/api/stats', mockStats());
+  const s = data.total_beds ? data : mockStats();
+  document.getElementById('stat-available').textContent = s.available_beds;
+  document.getElementById('stat-total').textContent = s.total_beds;
+  document.getElementById('stat-util').textContent = s.overall_utilization + '%';
+  document.getElementById('stat-triaged').textContent = s.patients_triaged_today;
+  document.getElementById('stat-triage-time').textContent = s.avg_triage_time_seconds;
+  document.getElementById('stat-critical').textContent = s.critical_cases_today;
+  const u = s.overall_utilization;
+  document.getElementById('sidebar-util').textContent = u + '%';
+  const bar = document.getElementById('sidebar-util-bar');
+  bar.style.width = u + '%';
+  bar.className = 'hs-bar-fill' + (u > 90 ? ' crit' : u > 75 ? ' warn' : '');
+}
+
+// ── LOAD BEDS ─────────────────────────────────────────────────────────────────
+async function loadBeds() {
+  const data = await apiFetch('/api/beds', { beds: mockBeds() });
+  const beds = data.beds || mockBeds();
+  renderDashBeds(beds);
+  renderFullBeds(beds);
+}
+
+function utilClass(pct) {
+  if (pct >= 90) return 'high';
+  if (pct >= 75) return 'med';
+  return 'low';
+}
+
+function renderDashBeds(beds) {
+  const el = document.getElementById('dash-beds');
+  el.innerHTML = beds.slice(0, 4).map(b => `
+    <div class="bed-item">
+      <div class="bed-dept">${b.department}</div>
+      <div class="bed-count" style="color:${b.utilization_pct>=90?'var(--red)':b.utilization_pct>=75?'var(--amber)':'var(--green)'}">
+        ${b.available} <span>/ ${b.total}</span>
+      </div>
+      <div class="util-bar"><div class="util-fill ${utilClass(b.utilization_pct)}" style="width:${b.utilization_pct}%"></div></div>
+      <div class="util-label"><span>${b.utilization_pct}% full</span><span>${b.available} free</span></div>
+    </div>
+  `).join('');
+}
+
+function renderFullBeds(beds) {
+  const grid = document.getElementById('full-beds-grid');
+  if (!grid) return;
+  grid.innerHTML = beds.map(b => `
+    <div class="bed-item" style="padding:16px">
+      <div class="bed-dept" style="font-size:12px;margin-bottom:6px">${b.department}</div>
+      <div class="bed-count" style="font-size:26px;color:${b.utilization_pct>=90?'var(--red)':b.utilization_pct>=75?'var(--amber)':'var(--green)'}">
+        ${b.available} <span>available</span>
+      </div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:8px">${b.occupied} occupied of ${b.total} total</div>
+      <div class="util-bar"><div class="util-fill ${utilClass(b.utilization_pct)}" style="width:${b.utilization_pct}%"></div></div>
+      <div class="util-label"><span>${b.utilization_pct}% utilization</span></div>
+    </div>
+  `).join('');
+
+  const sg = document.getElementById('beds-stats-grid');
+  if (sg) {
+    const total = beds.reduce((s,b)=>s+b.total,0);
+    const occ = beds.reduce((s,b)=>s+b.occupied,0);
+    const avail = total - occ;
+    const crit = beds.filter(b=>b.utilization_pct>=90).length;
+    sg.innerHTML = `
+      <div class="stat-card green"><div class="stat-label">Total Available</div><div class="stat-value green">${avail}</div><div class="stat-sub">beds right now</div></div>
+      <div class="stat-card amber"><div class="stat-label">Total Occupied</div><div class="stat-value amber">${occ}</div><div class="stat-sub">of ${total} beds</div></div>
+      <div class="stat-card red"><div class="stat-label">Critical Depts</div><div class="stat-value red">${crit}</div><div class="stat-sub">≥90% utilization</div></div>
+      <div class="stat-card blue"><div class="stat-label">Departments</div><div class="stat-value">${beds.length}</div><div class="stat-sub">monitored</div></div>
+    `;
+  }
+}
+
+// ── LOAD QUEUE ────────────────────────────────────────────────────────────────
+async function loadQueue() {
+  const data = await apiFetch('/api/queue', { queue: mockQueue() });
+  const queue = data.queue || mockQueue();
+  document.getElementById('queue-badge').textContent = queue.length;
+  const tableHTML = `
+    <table class="queue-table">
+      <thead><tr>
+        <th>#</th><th>Patient ID</th><th>Chief Complaint</th>
+        <th>ESI</th><th>Priority</th><th>Department</th><th>Arrived</th>
+      </tr></thead>
+      <tbody>${queue.map(p => `
+        <tr>
+          <td style="color:var(--dim)">${p.position}</td>
+          <td><span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--blue)">${p.patient_id}</span></td>
+          <td>${p.complaint}</td>
+          <td><span class="esi-badge esi-${p.esi_level}">${p.esi_level}</span></td>
+          <td style="font-size:11px;color:var(--muted)">${p.wait || '—'}</td>
+          <td><span class="dept-tag">${p.department}</span></td>
+          <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--dim)">${p.arrived}</td>
+        </tr>
+      `).join('')}</tbody>
+    </table>`;
+
+  document.getElementById('full-queue-wrap').innerHTML = tableHTML;
+
+  // Dashboard mini-queue (top 4)
+  const mini = `
+    <table class="queue-table">
+      <thead><tr><th>ESI</th><th>Complaint</th><th>Dept</th><th>Wait</th></tr></thead>
+      <tbody>${queue.slice(0,4).map(p => `
+        <tr>
+          <td><span class="esi-badge esi-${p.esi_level}">${p.esi_level}</span></td>
+          <td style="font-size:11px">${p.complaint.length>32?p.complaint.slice(0,32)+'…':p.complaint}</td>
+          <td><span class="dept-tag">${p.department}</span></td>
+          <td style="font-size:11px;color:var(--muted)">${p.wait||'—'}</td>
+        </tr>
+      `).join('')}</tbody>
+    </table>`;
+  document.getElementById('dash-queue-wrap').innerHTML = mini;
+}
+
+// ── LOAD FORECAST ────────────────────────────────────────────────────────────
+async function loadForecast() {
+  const data = await apiFetch('/api/forecast', { forecast: mockForecast() });
+  const fc = data.forecast || mockForecast();
+  renderForecastBars(fc, 'dash-forecast');
+  renderForecastBars(fc, 'full-forecast-wrap');
+  renderForecastTable(fc);
+}
+
+function renderForecastBars(fc, targetId) {
+  const el = document.getElementById(targetId);
+  if (!el) return;
+  const maxAdm = Math.max(...fc.map(f => f.predicted_admissions));
+  el.innerHTML = `<div class="forecast-bars" style="height:120px">` +
+    fc.map(f => {
+      const h = Math.round((f.predicted_utilization / 100) * 100);
+      return `
+        <div class="fc-bar-wrap">
+          <div class="fc-val">${f.predicted_utilization}%</div>
+          <div class="fc-bar-outer">
+            <div class="fc-bar-fill ${f.risk_level}" style="height:${h}%"></div>
+          </div>
+          <div class="fc-label">${f.label}</div>
+        </div>`;
+    }).join('') + `</div>
+    <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:var(--green)"></div>Low (&lt;70%)</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:var(--amber)"></div>Moderate (70–80%)</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:var(--red)"></div>High (&gt;80%)</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><div style="width:8px;height:8px;border-radius:2px;background:var(--red);animation:critFlash 1s infinite"></div>Critical (&gt;90%)</div>
+    </div>`;
+}
+
+function renderForecastTable(fc) {
+  const el = document.getElementById('forecast-table-wrap');
+  if (!el) return;
+  el.innerHTML = `
+    <table class="queue-table">
+      <thead><tr><th>Time Window</th><th>Predicted Admissions</th><th>Est. Utilization</th><th>Risk Level</th><th>Recommendation</th></tr></thead>
+      <tbody>${fc.map(f => {
+        const recs = {
+          low: 'Normal operations',
+          moderate: 'Monitor closely',
+          high: 'Alert additional staff',
+          critical: 'Activate surge protocol'
+        };
+        const colors = { low:'var(--green)', moderate:'var(--amber)', high:'var(--red)', critical:'var(--red)' };
+        return `<tr>
+          <td style="font-family:'DM Mono',monospace">${f.label}</td>
+          <td>${f.predicted_admissions} patients</td>
+          <td>${f.predicted_utilization}%</td>
+          <td><span style="color:${colors[f.risk_level]};font-weight:500;text-transform:capitalize">${f.risk_level}</span></td>
+          <td style="font-size:11px;color:var(--muted)">${recs[f.risk_level]}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+
+// ── ALERTS ───────────────────────────────────────────────────────────────────
+function loadAlerts() {
+  const alerts = [
+    { type: 'critical', text: 'ICU utilization at 90% — 2 beds remaining. Consider activating overflow protocol.', time: '09:22' },
+    { type: 'critical', text: 'Resuscitation Bay: 3 of 4 bays occupied. Incoming cardiac arrest case en route.', time: '09:18' },
+    { type: 'warning', text: 'Forecast shows >91% utilization in +3h window. Pre-emptive staff alert recommended.', time: '09:15' },
+    { type: 'warning', text: 'Acute Care: 5 ESI-3 patients waiting >25 minutes. Consider rerouting to Fast Track.', time: '09:10' },
+    { type: 'info', text: 'Average triage scoring time: 18 seconds. AI model performing within normal parameters.', time: '09:00' },
+    { type: 'info', text: 'System refresh cycle: all bed data updated as of 09:22. Next update in 30 seconds.', time: '08:58' },
+  ];
+
+  document.getElementById('alerts-feed').innerHTML = alerts.map(a => `
+    <div class="alert-item ${a.type}">
+      <div class="alert-dot"></div>
+      <div>
+        <div class="alert-text">${a.text}</div>
+        <div class="alert-time">${a.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── TRIAGE ────────────────────────────────────────────────────────────────────
+function fillDemo() {
+  document.getElementById('f-age').value = 58;
+  document.getElementById('f-gender').value = 'male';
+  document.getElementById('f-complaint').value = 'Severe chest pain radiating to left arm';
+  document.getElementById('f-symptoms').value = 'shortness of breath, sweating, nausea';
+  document.getElementById('f-history').value = 'hypertension, diabetes';
+  document.getElementById('f-consciousness').value = 'alert';
+  document.getElementById('f-arrival').value = 'ambulance';
+  document.getElementById('f-pain').value = 9;
+  document.getElementById('pain-val').textContent = '9';
+  document.getElementById('f-hr').value = 118;
+  document.getElementById('f-sbp').value = 88;
+  document.getElementById('f-dbp').value = 54;
+  document.getElementById('f-rr').value = 26;
+  document.getElementById('f-temp').value = 37.2;
+  document.getElementById('f-spo2').value = 91;
+}
+
+async function submitTriage() {
+  const required = ['f-age','f-gender','f-complaint','f-hr','f-sbp','f-dbp','f-rr','f-temp','f-spo2'];
+  for (const id of required) {
+    if (!document.getElementById(id).value) {
+      showModal('Missing fields', 'Please fill in all required vital signs and patient information before running triage.');
+      return;
+    }
+  }
+
+  const payload = {
+    age: parseInt(document.getElementById('f-age').value),
+    gender: document.getElementById('f-gender').value,
+    chief_complaint: document.getElementById('f-complaint').value,
+    heart_rate: parseInt(document.getElementById('f-hr').value),
+    systolic_bp: parseInt(document.getElementById('f-sbp').value),
+    diastolic_bp: parseInt(document.getElementById('f-dbp').value),
+    respiratory_rate: parseInt(document.getElementById('f-rr').value),
+    temperature: parseFloat(document.getElementById('f-temp').value),
+    spo2: parseInt(document.getElementById('f-spo2').value),
+    pain_scale: parseInt(document.getElementById('f-pain').value),
+    consciousness: document.getElementById('f-consciousness').value,
+    arrival_mode: document.getElementById('f-arrival').value,
+    symptoms: document.getElementById('f-symptoms').value.split(',').map(s=>s.trim()).filter(Boolean),
+    medical_history: document.getElementById('f-history').value.split(',').map(s=>s.trim()).filter(Boolean),
+  };
+
+  const resultEl = document.getElementById('triage-result');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div class="loading"><div class="spin"></div> Running AI triage analysis...</div>';
+
+  let result;
+  try {
+    const res = await fetch(API + '/api/triage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000)
+    });
+    result = await res.json();
+  } catch {
+    // Fallback: compute locally
+    result = computeLocalTriage(payload);
+  }
+
+  renderTriageResult(result);
+}
+
+function computeLocalTriage(p) {
+  let score = 0;
+  const vitAlerts = [], risks = [];
+  if (p.heart_rate < 50 || p.heart_rate > 150) { score += 30; vitAlerts.push(`Critical HR: ${p.heart_rate} bpm`); }
+  else if (p.heart_rate < 60 || p.heart_rate > 120) { score += 15; }
+  if (p.systolic_bp < 90 || p.systolic_bp > 180) { score += 30; vitAlerts.push(`Critical BP: ${p.systolic_bp}/${p.diastolic_bp} mmHg`); }
+  if (p.spo2 < 90) { score += 35; vitAlerts.push(`Critical SpO2: ${p.spo2}%`); }
+  else if (p.spo2 < 95) { score += 20; vitAlerts.push(`Low SpO2: ${p.spo2}%`); }
+  if (p.respiratory_rate < 8 || p.respiratory_rate > 30) { score += 30; vitAlerts.push(`Critical RR: ${p.respiratory_rate}/min`); }
+  const consScore = {alert:0,verbal:20,pain:40,unresponsive:60}[p.consciousness]||0;
+  score += consScore;
+  if (consScore >= 40) vitAlerts.push(`Altered consciousness: ${p.consciousness}`);
+  const highRisk = ['chest pain','shortness of breath','cardiac','bleeding','seizure','stroke','overdose','anaphylaxis'];
+  const allText = (p.chief_complaint + ' ' + p.symptoms.join(' ')).toLowerCase();
+  for (const k of highRisk) { if (allText.includes(k)) { score += 25; risks.push(`High-risk: ${k}`); } }
+  if (p.pain_scale >= 9) score += 20;
+  if (p.arrival_mode === 'ambulance') { score += 15; risks.push('Arrived by ambulance'); }
+  if (p.age < 2 || p.age > 75) { score += 10; risks.push(`Age risk: ${p.age} years`); }
+  const esi = score >= 100 ? 1 : score >= 70 ? 2 : score >= 40 ? 3 : score >= 20 ? 4 : 5;
+  const labels = {1:'Resuscitation — Immediate',2:'Emergent — 1–15 minutes',3:'Urgent — 30 minutes',4:'Less Urgent — 60 minutes',5:'Non-Urgent — 120+ minutes'};
+  const waits = {1:'Immediate',2:'≤15 minutes',3:'≤30 minutes',4:'≤60 minutes',5:'≤120 minutes'};
+  const depts = {1:'Resuscitation Bay',2:'Critical Care',3:'Acute Care',4:'Fast Track',5:'Minor Care'};
+  return { patient_id:`PT-${Math.floor(Math.random()*90000+10000)}`, esi_level:esi, esi_label:labels[esi], priority_score:Math.min(score,100), recommended_wait:waits[esi], recommended_department:depts[esi], risk_flags:risks.slice(0,5), vital_alerts:vitAlerts.slice(0,5), timestamp:new Date().toISOString() };
+}
+
+function renderTriageResult(r) {
+  const esiColors = {1:'var(--esi1)',2:'var(--esi2)',3:'var(--esi3)',4:'var(--esi4)',5:'var(--esi5)'};
+  const esiBg = {1:'rgba(244,63,94,0.15)',2:'rgba(249,115,22,0.15)',3:'rgba(245,158,11,0.15)',4:'rgba(16,212,138,0.15)',5:'rgba(96,165,250,0.15)'};
+  const c = esiColors[r.esi_level];
+  const bg = esiBg[r.esi_level];
+
+  const allAlerts = [
+    ...r.vital_alerts.map(a => ({text:a, type:'danger'})),
+    ...r.risk_flags.map(a => ({text:a, type:'warn'})),
+  ];
+
+  document.getElementById('triage-result').innerHTML = `
+    <div class="result-card">
+      <div class="result-header" style="background:${bg}">
+        <div class="result-esi-display">
+          <div class="esi-big" style="background:${bg};color:${c};border:2px solid ${c}">ESI ${r.esi_level}</div>
+          <div class="result-info">
+            <h3 style="color:${c}">${r.esi_label}</h3>
+            <p>Patient ${r.patient_id} · Scored at ${new Date(r.timestamp).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</p>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Priority Score</div>
+          <div style="font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:${c}">${Math.round(r.priority_score)}<span style="font-size:14px;font-weight:400;color:var(--muted)">/100</span></div>
+        </div>
+      </div>
+      <div class="result-body">
+        <div>
+          <div class="result-item-label">Recommended Wait</div>
+          <div class="result-item-value" style="color:${c}">${r.recommended_wait}</div>
+        </div>
+        <div>
+          <div class="result-item-label">Recommended Department</div>
+          <div class="result-item-value">${r.recommended_department}</div>
+        </div>
+        <div>
+          <div class="result-item-label">Triage Protocol</div>
+          <div class="result-item-value">ESI + Manchester</div>
+        </div>
+      </div>
+      ${allAlerts.length > 0 ? `
+      <div class="alerts-section">
+        ${allAlerts.map(a => `<span class="alert-chip ${a.type}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${a.text}</span>`).join('')}
+      </div>` : ''}
+    </div>`;
+
+  if (r.esi_level <= 2) {
+    showModal('Critical Patient Alert', `ESI Level ${r.esi_level} patient scored. Immediate attention required in ${r.recommended_department}. Notify attending physician now.`);
+  }
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function showModal(title, body) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent = body;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+// ── REFRESH ALL ───────────────────────────────────────────────────────────────
+async function refreshAll() {
+  await Promise.all([loadStats(), loadBeds(), loadQueue(), loadForecast()]);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+refreshAll();
+// Auto-refresh every 30 seconds
+setInterval(refreshAll, 30000);
+</script>
+</body>
+</html>

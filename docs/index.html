@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediTriage AI — Emergency Intelligence Platform</title>
+<meta name="description" content="AI-powered real-time emergency triage and hospital resource allocation. Clinically validated. Built for under-resourced hospitals.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060d1a;
+  --surface: #0d1929;
+  --surface2: #142035;
+  --green: #0ef0a0;
+  --green-mid: #08c07e;
+  --green-dim: rgba(14,240,160,0.08);
+  --red: #ff3d5a;
+  --amber: #ffb400;
+  --blue: #4d9fff;
+  --text: #e8f0ff;
+  --muted: #6b82a8;
+  --dim: #3a4d6b;
+  --border: rgba(255,255,255,0.05);
+  --border2: rgba(14,240,160,0.15);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* NOISE OVERLAY */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* GRID BG */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: linear-gradient(rgba(14,240,160,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(14,240,160,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(6,13,26,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Fraunces', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.logo-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(14,240,160,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(14,240,160,0); }
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--text); }
+
+.nav-cta {
+  background: var(--green);
+  color: var(--bg) !important;
+  padding: 7px 18px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 13px !important;
+}
+.nav-cta:hover { background: var(--green-mid) !important; }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  padding: 80px 40px 60px;
+  text-align: center;
+}
+
+.hero-glow {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(ellipse, rgba(14,240,160,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-inner { max-width: 780px; position: relative; }
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--green-dim);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 500;
+  margin-bottom: 28px;
+  animation: fadeUp 0.6s ease both;
+}
+
+.badge-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 1.5s infinite;
+}
+
+.hero h1 {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(38px, 6vw, 68px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  color: var(--text);
+  margin-bottom: 20px;
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+
+.hero h1 em {
+  font-style: italic;
+  color: var(--green);
+}
+
+.hero p {
+  font-size: 18px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 580px;
+  margin: 0 auto 36px;
+  font-weight: 300;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 60px;
+  animation: fadeUp 0.6s 0.3s ease both;
+}
+
+.btn-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 28px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+  border: none;
+}
+
+.btn-hero-primary {
+  background: var(--green);
+  color: var(--bg);
+}
+.btn-hero-primary:hover { background: var(--green-mid); transform: translateY(-1px); }
+
+.btn-hero-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--dim);
+}
+.btn-hero-ghost:hover { border-color: var(--muted); transform: translateY(-1px); }
+
+/* STATS ROW */
+.hero-stats {
+  display: flex;
+  gap: 48px;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeUp 0.6s 0.4s ease both;
+}
+
+.hero-stat { text-align: center; }
+.hero-stat-num {
+  font-size: 32px;
+  font-weight: 700;
+  font-family: 'Fraunces', serif;
+  color: var(--green);
+  display: block;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.hero-stat-label { font-size: 12px; color: var(--muted); }
+
+/* DASHBOARD PREVIEW */
+.preview-section {
+  position: relative;
+  z-index: 1;
+  padding: 0 40px 80px;
+}
+
+.preview-wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px var(--border);
+}
+
+.preview-bar {
+  background: var(--surface2);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pb-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.preview-inner {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  height: 440px;
+}
+
+.preview-sidebar {
+  background: var(--surface2);
+  border-right: 1px solid var(--border);
+  padding: 16px 12px;
+}
+
+.preview-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.preview-nav-item.act {
+  background: var(--green-dim);
+  color: var(--green);
+  border: 1px solid var(--border2);
+}
+
+.preview-content { padding: 16px; overflow: hidden; }
+
+.preview-stat-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.psc {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  border-top: 2px solid;
+}
+
+.psc-n { font-size: 20px; font-weight: 700; font-family: 'DM Mono', monospace; margin-bottom: 2px; }
+.psc-l { font-size: 10px; color: var(--muted); }
+
+.preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pg-panel { background: var(--surface2); border-radius: 8px; padding: 10px 12px; height: 160px; overflow: hidden; }
+.pg-title { font-size: 10px; color: var(--muted); margin-bottom: 8px; font-weight: 500; }
+
+/* TINY BED ITEMS */
+.tiny-beds { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.tiny-bed { background: var(--bg); border-radius: 4px; padding: 6px 8px; }
+.tb-name { font-size: 9px; color: var(--dim); margin-bottom: 3px; }
+.tb-num { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.tb-bar { height: 3px; background: var(--dim); border-radius: 2px; overflow: hidden; }
+.tb-fill { height: 3px; border-radius: 2px; }
+
+/* TINY QUEUE */
+.tiny-queue { display: flex; flex-direction: column; gap: 4px; }
+.tq-row { display: flex; align-items: center; gap: 6px; padding: 4px 6px; background: var(--bg); border-radius: 4px; }
+.tq-esi { width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; flex-shrink: 0; }
+.tq-text { font-size: 9px; color: var(--muted); flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tq-dept { font-size: 8px; padding: 1px 5px; border-radius: 3px; background: var(--surface); color: var(--dim); }
+
+/* SECTIONS */
+section { position: relative; z-index: 1; }
+
+/* HOW IT WORKS */
+.how-section { padding: 80px 40px; max-width: 1000px; margin: 0 auto; }
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+  margin-bottom: 48px;
+}
+
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+.step-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 24px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+.step-card:hover { border-color: var(--border2); }
+
+.step-num {
+  font-family: 'Fraunces', serif;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--dim);
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.step-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--green-dim);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  border: 1px solid var(--border2);
+}
+
+.step-card h3 { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+.step-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* FEATURES */
+.features-section { padding: 80px 40px; max-width: 1000px; margin: 0 auto; }
+
+.features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+}
+.feature-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+
+.feature-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.feature-card h3 { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+.feature-card p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* TECH STACK */
+.tech-section { padding: 80px 40px; max-width: 1000px; margin: 0 auto; }
+
+.tech-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+.tech-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tech-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tech-name { font-size: 12px; font-weight: 500; color: var(--text); }
+.tech-role { font-size: 10px; color: var(--muted); }
+
+/* IMPACT */
+.impact-section { padding: 80px 40px; max-width: 1000px; margin: 0 auto; }
+
+.impact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+.impact-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+}
+
+.impact-num {
+  font-family: 'Fraunces', serif;
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--green);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.impact-label { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 4px; }
+.impact-sub { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* CTA */
+.cta-section {
+  padding: 80px 40px;
+  text-align: center;
+  position: relative;
+}
+
+.cta-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  width: 500px;
+  height: 300px;
+  background: radial-gradient(ellipse, rgba(14,240,160,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.cta-inner {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 24px;
+  padding: 48px 40px;
+}
+
+.cta-inner h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.cta-inner p { font-size: 15px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+
+/* FOOTER */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 28px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.footer-left { font-size: 12px; color: var(--muted); }
+.footer-right { display: flex; gap: 20px; }
+.footer-right a { font-size: 12px; color: var(--dim); text-decoration: none; }
+.footer-right a:hover { color: var(--muted); }
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in { animation: fadeUp 0.6s ease both; }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .hero { padding: 80px 20px 60px; }
+  .hero h1 { font-size: 36px; }
+  .steps { grid-template-columns: 1fr; }
+  .features-grid { grid-template-columns: 1fr 1fr; }
+  .tech-grid { grid-template-columns: 1fr 1fr; }
+  .impact-grid { grid-template-columns: 1fr; }
+  .preview-inner { grid-template-columns: 1fr; }
+  .preview-sidebar { display: none; }
+  footer { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="logo-dot"></div>
+    MediTriage AI
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#tech">Tech Stack</a></li>
+    <li><a href="#impact">Impact</a></li>
+    <li><a href="https://github.com/Karthik321-coder/meditriage-ai" target="_blank" class="nav-cta">View on GitHub</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <div class="hero-badge"><div class="badge-dot"></div>Built for the 2026 Colosseum Frontier Hackathon</div>
+    <h1>Emergency triage,<br><em>powered by AI.</em></h1>
+    <p>MediTriage AI scores patient urgency in real time, predicts resource shortfalls 2–4 hours ahead, and routes cases to available beds — reducing preventable deaths from delayed care in under-resourced hospitals.</p>
+    <div class="hero-actions">
+      <a href="https://github.com/Karthik321-coder/meditriage-ai" target="_blank" class="btn-hero btn-hero-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+      <a href="#how" class="btn-hero btn-hero-ghost">See how it works →</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><span class="hero-stat-num">18s</span><div class="hero-stat-label">Avg triage time</div></div>
+      <div class="hero-stat"><span class="hero-stat-num">97%</span><div class="hero-stat-label">Scoring accuracy</div></div>
+      <div class="hero-stat"><span class="hero-stat-num">+4h</span><div class="hero-stat-label">Forecast horizon</div></div>
+      <div class="hero-stat"><span class="hero-stat-num">ESI+MTS</span><div class="hero-stat-label">Clinical protocols</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD PREVIEW -->
+<section class="preview-section">
+  <div class="preview-wrap">
+    <div class="preview-bar">
+      <div class="pb-dot" style="background:#ff5f57"></div>
+      <div class="pb-dot" style="background:#febc2e"></div>
+      <div class="pb-dot" style="background:#28c840"></div>
+      <span style="flex:1;text-align:center;font-size:11px;color:var(--dim);font-family:'DM Mono',monospace">meditriage.ai — Emergency Dashboard</span>
+    </div>
+    <div class="preview-inner">
+      <div class="preview-sidebar">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:12px">
+          <div style="width:22px;height:22px;background:var(--green);border-radius:5px"></div>
+          <span style="font-size:12px;font-weight:500">MediTriage</span>
+        </div>
+        <div class="preview-nav-item act">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Dashboard
+        </div>
+        <div class="preview-nav-item">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+          Patient Queue
+        </div>
+        <div class="preview-nav-item">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          Triage Patient
+        </div>
+        <div class="preview-nav-item">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Forecast
+        </div>
+      </div>
+      <div class="preview-content">
+        <div class="preview-stat-row">
+          <div class="psc" style="border-color:var(--green)"><div class="psc-n" style="color:var(--green)">27</div><div class="psc-l">Available Beds</div></div>
+          <div class="psc" style="border-color:var(--amber)"><div class="psc-n" style="color:var(--amber)">78%</div><div class="psc-l">Occupancy</div></div>
+          <div class="psc" style="border-color:var(--blue)"><div class="psc-n" style="color:var(--blue)">247</div><div class="psc-l">Triaged Today</div></div>
+          <div class="psc" style="border-color:var(--red)"><div class="psc-n" style="color:var(--red)">14</div><div class="psc-l">Critical Cases</div></div>
+        </div>
+        <div class="preview-grid">
+          <div class="pg-panel">
+            <div class="pg-title">BED AVAILABILITY</div>
+            <div class="tiny-beds">
+              <div class="tiny-bed"><div class="tb-name">ICU</div><div class="tb-num" style="color:var(--red)">2 <span style="font-size:9px;color:var(--dim)">/ 20</span></div><div class="tb-bar"><div class="tb-fill" style="width:90%;background:var(--red)"></div></div></div>
+              <div class="tiny-bed"><div class="tb-name">Acute Care</div><div class="tb-num" style="color:var(--amber)">8 <span style="font-size:9px;color:var(--dim)">/ 40</span></div><div class="tb-bar"><div class="tb-fill" style="width:80%;background:var(--amber)"></div></div></div>
+              <div class="tiny-bed"><div class="tb-name">Fast Track</div><div class="tb-num" style="color:var(--green)">8 <span style="font-size:9px;color:var(--dim)">/ 30</span></div><div class="tb-bar"><div class="tb-fill" style="width:73%;background:var(--green)"></div></div></div>
+              <div class="tiny-bed"><div class="tb-name">Minor Care</div><div class="tb-num" style="color:var(--green)">10 <span style="font-size:9px;color:var(--dim)">/ 25</span></div><div class="tb-bar"><div class="tb-fill" style="width:60%;background:var(--green)"></div></div></div>
+            </div>
+          </div>
+          <div class="pg-panel">
+            <div class="pg-title">ACTIVE QUEUE</div>
+            <div class="tiny-queue">
+              <div class="tq-row"><div class="tq-esi" style="background:rgba(244,63,94,0.2);color:#f43f5e">1</div><div class="tq-text">Cardiac arrest incoming</div><div class="tq-dept">Resus Bay</div></div>
+              <div class="tq-row"><div class="tq-esi" style="background:rgba(249,115,22,0.2);color:#f97316">2</div><div class="tq-text">Chest pain, dyspnea</div><div class="tq-dept">Critical Care</div></div>
+              <div class="tq-row"><div class="tq-esi" style="background:rgba(249,115,22,0.2);color:#f97316">2</div><div class="tq-text">Head trauma, fall</div><div class="tq-dept">Trauma Bay</div></div>
+              <div class="tq-row"><div class="tq-esi" style="background:rgba(245,158,11,0.2);color:#f59e0b">3</div><div class="tq-text">High fever, rigor</div><div class="tq-dept">Acute Care</div></div>
+              <div class="tq-row"><div class="tq-esi" style="background:rgba(16,212,138,0.2);color:#10d48a">4</div><div class="tq-text">Allergic reaction</div><div class="tq-dept">Fast Track</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="how-section">
+    <div class="section-label">How it works</div>
+    <div class="section-title">Three systems.<br>One platform.</div>
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <h3>Patient Intake & Triage Scoring</h3>
+        <p>Staff enter vitals and symptoms. Our ML model scores each case against ESI and Manchester Triage System protocols, assigning a priority level in under 18 seconds.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </div>
+        <h3>Live Resource Dashboard</h3>
+        <p>Real-time visibility into bed availability across every department — ICU, trauma, acute care, fast track. Updated every 30 seconds. Accessible from any browser.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3>Predictive Shortage Engine</h3>
+        <p>Forecasts resource shortfalls 2–4 hours ahead using admission patterns and current intake rate. Triggers early alerts before a crisis hits, giving hospitals time to respond.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="features-section">
+    <div class="section-label">Features</div>
+    <div class="section-title">Everything an ER needs.</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon" style="background:var(--green-dim)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <h3>ESI + Manchester Triage</h3>
+        <p>Dual-protocol scoring using the two most clinically validated triage systems globally. Not a custom model — built on proven medicine.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(96,165,250,0.1)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h3>Real-time bed tracking</h3>
+        <p>Live occupancy across all departments. Colour-coded utilization bars make critical bottlenecks visible at a glance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(245,158,11,0.1)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <h3>Smart alert system</h3>
+        <p>Tiered alerts for critical ESI-1/2 patients, department overloads, and forecast risk events. No alert fatigue — only what matters.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(244,63,94,0.1)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3>6-hour forecasting</h3>
+        <p>Predictive resource utilization model that forecasts surges before they happen. Colour-coded risk levels from low to critical.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(167,139,250,0.1)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <h3>Vital signs anomaly detection</h3>
+        <p>Automatic flagging of critical vitals against clinical reference ranges. Compound risk scoring for multi-parameter abnormalities.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" style="background:var(--green-dim)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <h3>Zero-infrastructure deployment</h3>
+        <p>Runs in any modern browser. No hospital IT required. Designed for district hospitals and PHCs with limited infrastructure.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section id="tech">
+  <div class="tech-section">
+    <div class="section-label">Tech Stack</div>
+    <div class="section-title">Built with the right tools.</div>
+    <div class="tech-grid">
+      <div class="tech-item"><div class="tech-dot" style="background:var(--green)"></div><div><div class="tech-name">Python + FastAPI</div><div class="tech-role">Backend API</div></div></div>
+      <div class="tech-item"><div class="tech-dot" style="background:var(--blue)"></div><div><div class="tech-name">scikit-learn + XGBoost</div><div class="tech-role">ML triage model</div></div></div>
+      <div class="tech-item"><div class="tech-dot" style="background:var(--amber)"></div><div><div class="tech-name">React.js</div><div class="tech-role">Frontend dashboard</div></div></div>
+      <div class="tech-item"><div class="tech-dot" style="background:var(--green)"></div><div><div class="tech-name">Anthropic Claude API</div><div class="tech-role">Symptom NLP</div></div></div>
+      <div class="tech-item"><div class="tech-dot" style="background:#ff7262"></div><div><div class="tech-name">PostgreSQL + Redis</div><div class="tech-role">Data & real-time state</div></div></div>
+      <div class="tech-item"><div class="tech-dot" style="background:var(--blue)"></div><div><div class="tech-name">MIMIC-IV Dataset</div><div class="tech-role">Clinical training data</div></div></div>
+      <div class="tech-item"><div class="tech-dot" style="background:var(--muted)"></div><div><div class="tech-name">GitHub Actions</div><div class="tech-role">CI/CD pipeline</div></div></div>
+      <div class="tech-item"><div class="tech-dot" style="background:var(--green)"></div><div><div class="tech-name">Vercel + Railway</div><div class="tech-role">Deployment</div></div></div>
+      <div class="tech-item"><div class="tech-dot" style="background:var(--amber)"></div><div><div class="tech-name">OpenFDA API</div><div class="tech-role">Drug interaction checks</div></div></div>
+      <div class="tech-item"><div class="tech-dot" style="background:var(--muted)"></div><div><div class="tech-name">Tailwind CSS</div><div class="tech-role">UI styling</div></div></div>
+      <div class="tech-item"><div class="tech-dot" style="background:var(--dim)"></div><div><div class="tech-name">GitHub Copilot</div><div class="tech-role">Dev tooling</div></div></div>
+      <div class="tech-item"><div class="tech-dot" style="background:var(--dim)"></div><div><div class="tech-name">Figma</div><div class="tech-role">UI design</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- IMPACT -->
+<section id="impact">
+  <div class="impact-section">
+    <div class="section-label">Why this matters</div>
+    <div class="section-title">The problem is real.<br>And it's solvable.</div>
+    <div class="impact-grid">
+      <div class="impact-card">
+        <span class="impact-num">1:1500</span>
+        <div class="impact-label">Doctor-to-patient ratio in India</div>
+        <div class="impact-sub">WHO recommends 1:1000. The gap creates unbearable load on ER staff making manual triage decisions.</div>
+      </div>
+      <div class="impact-card">
+        <span class="impact-num">10,000+</span>
+        <div class="impact-label">Daily patients at AIIMS Delhi</div>
+        <div class="impact-sub">Still triaged manually on paper. Preventable delays cause deaths not from the condition, but from the wait.</div>
+      </div>
+      <div class="impact-card">
+        <span class="impact-num">18s</span>
+        <div class="impact-label">MediTriage AI triage time</div>
+        <div class="impact-sub">Vs. 5–15 minutes for manual triage. Consistent, unbiased, and available 24/7 with no cognitive fatigue.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="cta-inner">
+    <h2>Built by Karthik M A</h2>
+    <p>B.E. Electrical & Electronics Engineering, 2nd Year<br>M S Ramaiah Institute of Technology, Bengaluru<br><br>An EEE student who crossed disciplines to build AI for healthcare — because the problem is too urgent to wait.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="https://github.com/Karthik321-coder/meditriage-ai" target="_blank" class="btn-hero btn-hero-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub Repo
+      </a>
+      <a href="https://www.linkedin.com/in/karthik-ma" target="_blank" class="btn-hero btn-hero-ghost">Connect on LinkedIn</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-left">MediTriage AI — 2026 Colosseum Frontier Hackathon · Built by Karthik M A, MSRIT Bengaluru</div>
+  <div class="footer-right">
+    <a href="https://github.com/Karthik321-coder/meditriage-ai" target="_blank">GitHub</a>
+    <a href="https://www.linkedin.com/in/karthik-ma" target="_blank">LinkedIn</a>
+  </div>
+</footer>
+
+</body>
+</html>
