@@ -1,0 +1,27 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">MediTriage AI Logo</title>
+  <desc id="desc">Rounded medical badge with heartbeat pulse for emergency triage.</desc>
+  <defs>
+    <linearGradient id="bgGrad" x1="32" y1="24" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F2036"/>
+      <stop offset="1" stop-color="#091526"/>
+    </linearGradient>
+    <linearGradient id="pulseGrad" x1="48" y1="128" x2="208" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10D48A"/>
+      <stop offset="1" stop-color="#66B7FF"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="18" y="18" width="220" height="220" rx="48" fill="url(#bgGrad)"/>
+  <rect x="18" y="18" width="220" height="220" rx="48" stroke="#2A3B56" stroke-width="4"/>
+
+  <circle cx="128" cy="128" r="66" fill="#0D1F34" stroke="#1F3A5A" stroke-width="4"/>
+
+  <path d="M48 128H90L108 98L126 156L144 114L160 128H208" stroke="url(#pulseGrad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="120" y="72" width="16" height="36" rx="3" fill="#10D48A"/>
+  <rect x="110" y="82" width="36" height="16" rx="3" fill="#10D48A"/>
+
+  <circle cx="208" cy="128" r="8" fill="#66B7FF"/>
+  <circle cx="48" cy="128" r="8" fill="#10D48A"/>
+</svg>

@@ -83,12 +83,12 @@ nav {
   text-decoration: none;
 }
 
-.logo-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--green);
-  animation: pulse 2s infinite;
+.logo-glyph {
+  width: 22px;
+  height: 22px;
+  display: block;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px var(--border2);
 }
 
 @keyframes pulse {
@@ -567,7 +567,7 @@ footer {
 
 <nav>
   <a class="nav-logo" href="#">
-    <div class="logo-dot"></div>
+    <img class="logo-glyph" src="../assets/logo.svg" alt="MediTriage logo">
     MediTriage AI
   </a>
   <ul class="nav-links">

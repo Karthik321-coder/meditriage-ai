@@ -82,16 +82,21 @@ body {
 }
 
 .logo-icon {
-  width: 32px;
-  height: 32px;
-  background: var(--green);
-  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 0 1px var(--green-border);
 }
 
-.logo-icon svg { width: 18px; height: 18px; }
+.logo-icon img {
+  width: 32px;
+  height: 32px;
+  display: block;
+  border-radius: 9px;
+}
 
 .logo-name {
   font-family: 'Fraunces', serif;
@@ -720,10 +725,7 @@ body {
   <div class="logo">
     <div class="logo-mark">
       <div class="logo-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#0a0f1a" stroke-width="2.5" stroke-linecap="round">
-          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/>
-          <circle cx="12" cy="12" r="4" fill="#0a0f1a"/>
-        </svg>
+        <img src="../assets/logo.svg" alt="MediTriage logo">
       </div>
       <span class="logo-name">MediTriage</span>
     </div>
